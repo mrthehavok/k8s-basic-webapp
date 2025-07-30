@@ -17,17 +17,18 @@ spec:
         - name: backend
           image: python:3.9-slim
           ports:
-          - containerPort: 5000
+            - containerPort: 5000
           volumeMounts:
-          - name: config-volume
-            mountPath: /etc/config
-          - name: logs-volume
-            mountPath: /app/logs
+            - name: config-volume
+              mountPath: /etc/config
+            - name: logs-volume
+              mountPath: /app/logs
           command: ["/bin/sh", "-c"]
           args:
-            - >
-              pip install Flask &&
-              echo '
+            - |
+              set -e
+              pip install Flask pytz
+              cat <<'PY' > app.py
               from flask import Flask, jsonify, request
               from datetime import datetime
               import pytz
@@ -54,12 +55,12 @@ spec:
 
               if __name__ == "__main__":
                   app.run(host="0.0.0.0", port=5000)
-              ' > app.py &&
+              PY
               python app.py
-          volumes:
-          - name: config-volume
-            configMap:
-              name: backend-config
-          - name: logs-volume
-            persistentVolumeClaim:
-              claimName: backend-logs-pvc
+      volumes:
+        - name: config-volume
+          configMap:
+            name: backend-config
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: backend-logs-pvc

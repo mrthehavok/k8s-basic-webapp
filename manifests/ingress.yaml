@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: learning-ingress
   namespace: learning-ns
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   rules:
     - http:
@@ -14,8 +16,8 @@ spec:
                 name: frontend-service
                 port:
                   number: 80
-          - path: /api
-            pathType: Prefix
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: backend-service

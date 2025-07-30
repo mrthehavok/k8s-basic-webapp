@@ -1,4 +1,4 @@
-d: task-1
+id: task-1
 title: "Scaffold beginner Kubernetes manifests"
 status: "In Progress"
 created: 2025-07-30
