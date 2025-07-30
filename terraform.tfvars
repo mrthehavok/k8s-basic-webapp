@@ -15,4 +15,4 @@ public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
 private_subnets = ["10.0.101.0/24", "10.0.102.0/24"]
 
 # GitHub repository for OIDC trust (owner/repo)
-github_repo = "OWNER/REPO"
+github_repo = "mrthehavok/k8s-basic-webapp"
