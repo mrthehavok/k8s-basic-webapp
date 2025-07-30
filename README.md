@@ -80,13 +80,17 @@ minikube delete
 
 ### Prerequisites
 
-| Requirement                                                     | Why                        |
-| --------------------------------------------------------------- | -------------------------- |
-| **AWS account** with permissions to create VPC / EKS            | Infrastructure             |
-| **S3 bucket** + **DynamoDB table** for remote state             | Terraform backend          |
-| **GitHub OIDC provider** created once per account               | Keyless auth               |
-| **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME` | ARN of the IAM role for OIDC |
-| **Root `terraform.tfvars` file**                                | Centralised variable management |
+| Requirement                                                     | Purpose / Usage                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------- |
+| **AWS account** with permissions to create VPC / EKS            | Provisioning infrastructure                                   |
+| **AWS CLI** configured for the target account / region          | Required for the local bootstrap script & manual Terraform    |
+| **Terraform CLI ≥ 1.5**                                         | Local `terraform init / plan / apply` (optional)              |
+| **S3 bucket** + **DynamoDB table** for remote state *¹*         | Backend for Terraform state & locking                         |
+| **GitHub OIDC provider** created once per account               | Key-less authentication from GitHub Actions                   |
+| **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME`           | ARN of the IAM role to assume from the workflow               |
+| **Root `terraform.tfvars` file**                                | Centralised variable management                               |
+
+> *¹ The bucket and table are created automatically by the bootstrap script **or** by the CI pipeline if they don’t exist.*
 
 > ℹ️ The OIDC provider and role will be created automatically by Terraform if they do not exist (first run requires elevated AWS credentials).
 
@@ -126,7 +130,9 @@ No AWS keys are stored; short-lived credentials are exchanged at runtime.
 
 ## Bootstrap Checklist
 
-1. 🔑 **Bootstrap S3 Backend**: Run the helper script to create the state bucket idempotently.
+1. 🔑 **Bootstrap S3 Backend**
+   The **deploy** GitHub Actions workflow automatically runs the helper script on every PR and merge.
+   Local execution is only required if you want to run `terraform init/plan/apply` from your workstation:
    ```bash
    ./scripts/create_backend_bucket.sh
    ```
