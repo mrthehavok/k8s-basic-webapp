@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-html-config
+  namespace: learning-ns
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>K8s Clock</title>
+        <style>
+            body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+            #clock { font-size: 48px; margin-bottom: 20px; }
+            .tz-container { margin-top: 30px; }
+        </style>
+    </head>
+    <body>
+        <h1>Kubernetes Time Service</h1>
+        <div id="clock"></div>
+        <div class="tz-container">
+            <h2>Timezone Difference Calculator</h2>
+            <input type="text" id="tz1" placeholder="e.g., Europe/Madrid" value="Europe/Madrid">
+            <input type="text" id="tz2" placeholder="e.g., America/New_York" value="America/New_York">
+            <button onclick="getTzDiff()">Calculate Difference</button>
+            <p id="tz-result"></p>
+        </div>
+
+        <script>
+            function updateTime() {
+                fetch('/api/time')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('clock').innerText = new Date(data.time).toLocaleTimeString();
+                    });
+            }
+
+            function getTzDiff() {
+                const tz1 = document.getElementById('tz1').value;
+                const tz2 = document.getElementById('tz2').value;
+                fetch(`/api/tz?tz1=${tz1}&tz2=${tz2}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            document.getElementById('tz-result').innerText = `Error: ${data.error}`;
+                        } else {
+                            document.getElementById('tz-result').innerText = `Difference: ${data.diff_hours} hours`;
+                        }
+                    });
+            }
+
+            setInterval(updateTime, 1000);
+            updateTime();
+        </script>
+    </body>
+    </html>
