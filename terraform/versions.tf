@@ -14,11 +14,11 @@ terraform {
 
   backend "s3" {
     # TODO: replace with real bucket/key before first apply
-    bucket         = "CHANGE_ME-terraform-state"
-    key            = "eks/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "CHANGE_ME-terraform-lock"
+    bucket       = "k8s-tfstate-347913851454-eu-west-1"
+    key          = "eks/terraform.tfstate"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 

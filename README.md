@@ -80,17 +80,17 @@ minikube delete
 
 ### Prerequisites
 
-| Requirement                                                     | Purpose / Usage                                               |
-| --------------------------------------------------------------- | ------------------------------------------------------------- |
-| **AWS account** with permissions to create VPC / EKS            | Provisioning infrastructure                                   |
-| **AWS CLI** configured for the target account / region          | Required for the local bootstrap script & manual Terraform    |
-| **Terraform CLI ≥ 1.5**                                         | Local `terraform init / plan / apply` (optional)              |
-| **S3 bucket** + **DynamoDB table** for remote state *¹*         | Backend for Terraform state & locking                         |
-| **GitHub OIDC provider** created once per account               | Key-less authentication from GitHub Actions                   |
-| **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME`           | ARN of the IAM role to assume from the workflow               |
-| **Root `terraform.tfvars` file**                                | Centralised variable management                               |
+| Requirement                                            | Purpose / Usage                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| **AWS account** with permissions to create VPC / EKS   | Provisioning infrastructure                                |
+| **AWS CLI** configured for the target account / region | Required for the local bootstrap script & manual Terraform |
+| **Terraform CLI ≥ 1.5**                                | Local `terraform init / plan / apply` (optional)           |
+| **S3 bucket** for remote state                         | Backend for Terraform state & locking                      |
+| **GitHub OIDC provider** created once per account      | Key-less authentication from GitHub Actions                |
+| **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME`  | ARN of the IAM role to assume from the workflow            |
+| **Root `terraform.tfvars` file**                       | Centralised variable management                            |
 
-> *¹ The bucket and table are created automatically by the bootstrap script **or** by the CI pipeline if they don’t exist.*
+> _¹ The bucket and table are created automatically by the bootstrap script **or** by the CI pipeline if they don’t exist._
 
 > ℹ️ The OIDC provider and role will be created automatically by Terraform if they do not exist (first run requires elevated AWS credentials).
 
@@ -139,7 +139,7 @@ No AWS keys are stored; short-lived credentials are exchanged at runtime.
 2. 📄 **Configure Variables**: Copy `terraform.tfvars.example` to `terraform.tfvars` and update the `github_repo` and other variables as needed.
 3. 🔐 **Configure Secrets**: Add the `AWS_IAM_ROLE_TO_ASSUME` secret to your GitHub repository settings, containing the ARN of the role created by `iam.tf`.
 4. ✅ **Open a Pull Request**: Ensure the **plan** appears, loading variables from `terraform.tfvars`.
-6. 🚀 Merge to `main` – the **apply** job provisions EKS and deploys the app.
+5. 🚀 Merge to `main` – the **apply** job provisions EKS and deploys the app.
 
 ---
 
