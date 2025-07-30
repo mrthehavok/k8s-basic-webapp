@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.30"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.22"
-    }
   }
 
   backend "s3" {
@@ -24,10 +20,11 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-}
 
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.this.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
+  default_tags {
+    tags = {
+      created_by   = "terraform"
+      project_name = "k8s-basic-webapp"
+    }
+  }
 }
