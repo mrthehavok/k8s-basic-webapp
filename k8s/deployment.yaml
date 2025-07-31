@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: calculator
-          image: ghcr.io/<owner>/calculator:latest
+          image: ghcr.io/mrthehavok/k8s-basic-webapp/calculator:latest
           ports:
             - containerPort: 8000
           env:
