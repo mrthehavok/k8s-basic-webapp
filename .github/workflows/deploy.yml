@@ -93,6 +93,14 @@ jobs:
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $(terraform -chdir="${{ env.TF_WORKING_DIR }}" output -raw cluster_name)
           kubectl version --client
 
+      - name: Get EKS token
+        if: github.event_name == 'pull_request'
+        run: |
+          aws eks get-token \
+            --region $AWS_REGION \
+            --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) \
+            > /dev/null
+
       - name: Kubernetes Diff (Pull Request)
         if: github.event_name == 'pull_request'
         run: |
