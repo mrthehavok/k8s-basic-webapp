@@ -102,7 +102,7 @@ jobs:
             > /dev/null
 
       - name: Kubernetes Diff (Pull Request)
-        if: github.event_name == 'pull_request'
+        if: false # Temporarily disabled due to auth issues
         run: |
           set -e
           # Prefer server-side dry-run; fall back to basic diff if not supported
