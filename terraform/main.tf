@@ -53,7 +53,15 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
+variable "enable_aws_auth_patch" {
+  description = "Temporarily skip aws-auth ConfigMap management until proper RBAC is in place."
+  type        = bool
+  default     = false
+}
+
 resource "kubernetes_config_map_v1_data" "aws_auth" {
+  count = var.enable_aws_auth_patch ? 1 : 0
+
   metadata {
     name      = "aws-auth"
     namespace = "kube-system"
