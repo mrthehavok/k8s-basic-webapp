@@ -118,7 +118,15 @@ jobs:
           echo "Testing kubectl authentication..."
           kubectl auth can-i get pods --all-namespaces
 
+      - name: Create namespace if absent
+        run: kubectl create namespace calculator --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Kubernetes Diff
+        if: github.event_name == 'pull_request'
+        run: |
+          kubectl diff -f k8s/ --namespace calculator || true
+
       - name: Kubernetes Apply
         if: github.event_name == 'pull_request'
         run: |
-          kubectl apply -f k8s/ --validate=false
+          kubectl apply -f k8s/ --namespace calculator
