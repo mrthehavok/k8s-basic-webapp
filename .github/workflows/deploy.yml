@@ -91,7 +91,7 @@ jobs:
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $(terraform -chdir="${{ env.TF_WORKING_DIR }}" output -raw cluster_name)
-          kubectl version --client --short
+          kubectl version --client
 
       - name: Kubernetes Diff (Pull Request)
         if: github.event_name == 'pull_request'

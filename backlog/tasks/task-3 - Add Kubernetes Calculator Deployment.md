@@ -23,6 +23,7 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 11:00: Resolved multiple deployment failures by fixing Terraform configuration and enhancing the CI/CD pipeline.
 - 2025-07-31 11:07: Split the deployment workflow into distinct Terraform and Kubernetes jobs, adding dry-run checks for pull requests.
 - 2025-07-31 11:14: Fixed `kubectl version` flag and added path filters to the build workflow to prevent unnecessary runs.
+- 2025-07-31 11:20: Fixed unsupported `--short` flag in `kubectl version --client` command after CI failure.
 
 ## Decisions Made
 
@@ -31,6 +32,7 @@ Use the existing **manual** branch as an implementation reference.
 - **Split workflow into Terraform and Kubernetes jobs:** The `deploy.yml` workflow was refactored into two separate jobs. The `terraform` job handles infrastructure provisioning (`plan` on PR, `apply` on merge), while the `kubernetes` job manages the application deployment (`diff` on PR, `apply` on merge). This separation ensures the cluster is ready before the application is deployed and provides clear, independent verification steps for both layers.
 - **Temporarily removed EKS node role from `aws-auth`:** A `terraform plan` failure was caused by an incorrect reference to the EKS node group role ARN. The reference was temporarily removed to unblock the pipeline. This will need to be addressed in a future task to ensure nodes can join the cluster correctly.
 - **Optimized CI/CD Triggers and Commands:** Adjusted the `deploy.yml` workflow to use `kubectl version --client --short` to resolve an unsupported flag error. Added path filters to `build-calculator.yml` to ensure the workflow only runs when relevant files (`Dockerfile`, `calculator/**`) are changed, conserving CI resources.
+- **Dropped `--short` flag from `kubectl version`:** The `--short` flag is not supported by the `kubectl` version on the GitHub Actions runner, causing CI failures. The flag was removed to ensure compatibility.
 
 ## Files Modified
 
