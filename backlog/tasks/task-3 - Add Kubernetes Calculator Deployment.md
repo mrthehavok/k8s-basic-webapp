@@ -34,6 +34,12 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 14:18: Fixed kubectl authentication error in CI/CD by ensuring the EKS token is retrieved before running kubectl commands.
 - 2025-07-31 14:26: Added extensive debugging to the CI/CD workflow to diagnose the root cause of `kubectl` authentication failures.
 - 2025-07-31 14:32: Successfully resolved authentication issue by updating GitHub secret AWS_IAM_ROLE_TO_ASSUME to match existing IAM role. Deployment now works successfully.
+- 2025-07-31 16:10: Installed AWS Load Balancer Controller via Terraform Helm release with IRSA-backed service account.
+- 2025-07-31 16:25: Tagged public and private subnets for ELB discovery and re-applied Terraform; ALB provisioning succeeded.
+- 2025-07-31 16:45: Broadened controller IAM policy (AddTags/RemoveTags) to wildcard resources and set new default version; restarted controller pods.
+- 2025-07-31 17:05: Created IngressClass `alb`, updated ingress annotations; ALB DNS became active but returned 503 due to Pending pods.
+- 2025-07-31 17:15: Reduced calculator Deployment replicas from 2 to 1 to fit node pod limits.
+- 2025-07-31 17:18: Scaled EKS node group instance type from t3.micro to t3.small to provide additional pod capacity.
 
 ## Decisions Made
 
@@ -54,6 +60,11 @@ Use the existing **manual** branch as an implementation reference.
 - **Ensured EKS token is obtained before kubectl commands:** The CI/CD pipeline was failing with an authentication error because `kubectl` was being run before the EKS authentication token was retrieved. The workflow was updated to run `aws eks get-token` before any `kubectl` commands are executed.
 - **Added extensive CI/CD debugging for `kubectl` auth:** To diagnose the persistent `kubectl` authentication issues, several debugging steps were added to the `deploy.yml` workflow. These include verifying the AWS CLI installation, inspecting the generated `kubeconfig`, testing the AWS identity and EKS token generation, and running a `kubectl auth can-i` check. The `kubectl apply` command was also modified to use `--validate=false` as a temporary workaround to bypass potential validation-related auth issues.
 - **Resolved IAM role mismatch:** Discovered that GitHub Actions was using role `github-actions-eks-deploy` while Terraform created `basic-webapp-eks-github-actions`. Fixed by updating the GitHub secret to use the correct existing role ARN.
+- **Scaled node group to t3.small:** Increased EKS node group instance type to provide more pod capacity and resolve Pending calculator pods.
+- **Installed AWS Load Balancer Controller via Helm with IRSA:** Enabled automatic ALB provisioning and management for Kubernetes Ingress resources.
+- **Tagged VPC subnets for ELB auto-discovery:** Added `kubernetes.io/role/elb` and `kubernetes.io/role/internal-elb` tags to public and private subnets so the controller can find them.
+- **Broadened ALB controller IAM policy to wildcard resources:** Resolved `elasticloadbalancing:AddTags` / `RemoveTags` 403 errors during listener tag operations.
+- **Created IngressClass `alb` and updated ingress annotations:** Bound the calculator Ingress to the new ALB controller class ensuring correct load balancer selection.
 
 ## Files Modified
 
@@ -65,6 +76,9 @@ Use the existing **manual** branch as an implementation reference.
 - `.github/workflows/deploy.yml` (modified)
 - `k8s/deployment.yaml` (created)
 - `k8s/service.yaml` (created)
+- `terraform/alb_controller.tf` (created)
+- `terraform/policies/aws_load_balancer_controller_policy.json` (modified)
+- `k8s/namespace.yaml` (created)
 - `k8s/ingress.yaml` (created)
 - `README.md` (modified)
 - `terraform/main.tf` (modified)
