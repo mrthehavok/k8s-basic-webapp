@@ -1,9 +1,9 @@
-id: task-3
+id: task-4
 title: "Implement Simple Calculator Feature"
 status: "To Do"
 depends_on: ["task-2"]
 created: 2025-07-30
-updated: 2025-07-30
+updated: 2025-07-31
 
 ## Description
 
