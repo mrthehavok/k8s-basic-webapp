@@ -11,6 +11,16 @@ module "vpc" {
 
   enable_nat_gateway = true
   single_nat_gateway = true
+
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                    = "1"
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"           = "1"
+  }
 }
 
 module "eks" {
@@ -33,53 +43,48 @@ module "eks" {
       max_size     = 3
       desired_size = 2
 
-      instance_types = ["t3.micro"]
+      instance_types = ["t3.small"]
       ami_type       = "AL2023_x86_64_STANDARD"
+    }
+  }
+
+  # Enable the EKS module to manage the aws-auth ConfigMap
+  authentication_mode = "API_AND_CONFIG_MAP"
+
+  # Grant access to specific IAM principals
+  access_entries = {
+    # Grant your user admin access
+    idmitriev = {
+      principal_arn = "arn:aws:iam::347913851454:user/idmitriev"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    # Grant GitHub Actions role admin access
+    github_actions = {
+      principal_arn = aws_iam_role.github_actions.arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
     }
   }
 }
 
-# Data sources for EKS cluster are removed as they are not currently used
-# and cause a dependency cycle during initial creation.
-# They can be added back when Kubernetes resources are managed via Terraform.
-
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
-variable "enable_aws_auth_patch" {
-  description = "Temporarily skip aws-auth ConfigMap management until proper RBAC is in place."
-  type        = bool
-  default     = false
-}
-
-resource "kubernetes_config_map_v1_data" "aws_auth" {
-  count = var.enable_aws_auth_patch ? 1 : 0
-
-  metadata {
-    name      = "aws-auth"
-    namespace = "kube-system"
+# Output to confirm who has access
+output "eks_access_entries" {
+  description = "IAM principals with EKS cluster access"
+  value = {
+    user           = "arn:aws:iam::347913851454:user/idmitriev"
+    github_actions = aws_iam_role.github_actions.arn
   }
-
-  data = {
-    mapRoles = yamlencode(
-      [
-        {
-          rolearn  = aws_iam_role.github_actions.arn
-          username = "github-actions"
-          groups = [
-            "system:masters",
-          ]
-        }
-      ]
-    )
-  }
-
-  depends_on = [module.eks]
 }

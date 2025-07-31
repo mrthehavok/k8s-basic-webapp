@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: calculator
+  namespace: calculator
   labels:
     app: calculator
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: calculator
