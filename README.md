@@ -183,3 +183,10 @@ To deploy the application to a Kubernetes cluster, apply the manifests in the `k
 ```bash
 kubectl apply -f k8s/
 ```
+
+### Usage
+
+Open `index.html` in a browser after the service is running. The page includes a
+simple calculator UI that calls the `/api/calculate` endpoint. The API accepts
+`a`, `b`, and `op` query parameters where `op` is one of `add`, `subtract`,
+`multiply`, or `divide`.

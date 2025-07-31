@@ -1,6 +1,6 @@
 id: task-4
 title: "Implement Simple Calculator Feature"
-status: "To Do"
+status: "Done"
 depends_on: ["task-2"]
 created: 2025-07-30
 updated: 2025-07-31
@@ -13,34 +13,37 @@ The calculator should support basic arithmetic operations: addition, subtraction
 
 ## Acceptance Criteria
 
-- [ ] **Frontend:**
+- [x] **Frontend:**
 
-  - [ ] A new "Calculator" section is added to `index.html`.
-  - [ ] The UI includes two input fields for numbers and buttons for the four operations (+, -, \*, /).
-  - [ ] A result area is present to display the output.
-  - [ ] Clicking an operation button triggers a `fetch` call to the backend API.
+  - [x] A new "Calculator" section is added to `index.html`.
+  - [x] The UI includes two input fields for numbers and buttons for the four operations (+, -, \*, /).
+  - [x] A result area is present to display the output.
+  - [x] Clicking an operation button triggers a `fetch` call to the backend API.
 
-- [ ] **Backend:**
+- [x] **Backend:**
 
-  - [ ] A new API endpoint, `/api/calculate`, is added to the Flask application.
-  - [ ] The endpoint accepts two numbers and an operation type as query parameters.
-  - [ ] The endpoint returns a JSON object with the calculated result.
-  - [ ] The endpoint includes error handling for invalid inputs (e.g., division by zero).
+  - [x] A new API endpoint, `/api/calculate`, is added to the Flask application.
+  - [x] The endpoint accepts two numbers and an operation type as query parameters.
+  - [x] The endpoint returns a JSON object with the calculated result.
+  - [x] The endpoint includes error handling for invalid inputs (e.g., division by zero).
 
-- [ ] **Deployment:**
-  - [ ] The updated application is successfully deployed to the EKS cluster via the automated GitHub Actions pipeline.
+- [x] **Deployment:**
+  - [x] The updated application is successfully deployed to the EKS cluster via the automated GitHub Actions pipeline.
 
 ## Session History
 
-<!-- Update as work progresses -->
+- **2025-07-31**: Implemented HTML UI and `/api/calculate` endpoint.
 
 ## Decisions Made
 
-<!-- Document key implementation decisions -->
+- Served `index.html` directly from Flask to avoid additional Nginx config.
 
 ## Files Modified
 
-<!-- Track all file changes -->
+- `index.html`
+- `calculator/app.py`
+- `Dockerfile`
+- `README.md`
 
 ## Blockers
 
