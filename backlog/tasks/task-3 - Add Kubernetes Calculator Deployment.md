@@ -3,7 +3,7 @@ title: "Add Kubernetes Calculator Deployment"
 status: "In Progress"
 depends_on: ["task-2"]
 created: 2025-07-31
-updated: 2025-07-31T11:52:20.386Z
+updated: 2025-07-31T12:00:26.907Z
 
 ## Description
 
@@ -29,6 +29,8 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 11:35: Temporarily disabled the Kubernetes diff step in the CI workflow to bypass persistent authentication issues.
 - 2025-07-31 11:43: Guarded aws-auth ConfigMap management with a feature flag to unblock Terraform apply.
 - 2025-07-31 11:52: Moved Kubernetes apply step to run on pull requests for faster debugging and added an explicit EKS token step.
+- 2025-07-31 11:57: Re-enabled the `aws-auth` ConfigMap in Terraform to fix the `Unauthorized` error during `kubectl apply`. Removed the temporary RBAC debugging step from the workflow.
+- 2025-07-31 12:00: Fixed Terraform `Unauthorized` error by configuring the Kubernetes provider to use `exec` authentication, allowing it to manage the `aws-auth` ConfigMap.
 
 ## Decisions Made
 
@@ -44,6 +46,8 @@ Use the existing **manual** branch as an implementation reference.
 - **Disabled aws-auth management to avoid Unauthorized error:** The `aws-auth` ConfigMap resource was causing a `Forbidden` error during `terraform apply`. It has been temporarily disabled using a feature flag. A new task will be created to re-enable it once the underlying RBAC permissions are correctly configured.
 - **Moved Kubernetes apply to PR for faster debugging:** The `kubernetes` job in the `deploy.yml` workflow now runs on `pull_request` events. This allows for faster debugging of Kubernetes deployment issues without waiting for a merge to `main`.
 - **Added explicit EKS token step:** An `aws eks get-token` step was added to the `kubernetes` job to ensure `kubectl` is always authenticated before running `apply`.
+- **Re-enabled `aws-auth` ConfigMap management:** The `kubectl apply` command was failing with an `Unauthorized` error because the GitHub Actions IAM role was not mapped to a Kubernetes user. This was resolved by re-enabling the `kubernetes_config_map_v1_data.aws_auth` resource in Terraform, which grants the CI/CD role `system:masters` permissions.
+- **Configured Kubernetes provider with `exec` authentication:** The `terraform apply` command itself was failing with an `Unauthorized` error because the provider could not authenticate with the EKS cluster to manage the `aws-auth` ConfigMap. This was resolved by configuring the Kubernetes provider to use an `exec` block, which dynamically retrieves an EKS token, mirroring how `kubectl` authenticates. This allows Terraform to manage the `aws-auth` ConfigMap and add the necessary IAM role mappings.
 
 ## Files Modified
 

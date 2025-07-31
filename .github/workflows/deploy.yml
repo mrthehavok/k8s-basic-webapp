@@ -100,20 +100,5 @@ jobs:
             --region $AWS_REGION \
             --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) > /dev/null
 
-      - name: Debug RBAC
-        run: |
-          set -x
-          echo "---"
-          echo "1. VERIFYING KUBECTL CONTEXT AND IDENTITY"
-          kubectl config current-context
-          kubectl config view --minify --raw
-          echo "---"
-          echo "2. CHECKING API SERVER CONNECTIVITY (RAW)"
-          kubectl get --raw /healthz || echo "Connectivity check failed"
-          echo "---"
-          echo "3. CHECKING RBAC PERMISSIONS (AUTH CAN-I)"
-          kubectl auth can-i list pods --all-namespaces
-          echo "---"
-
       - name: Kubernetes Apply
         run: kubectl apply -f k8s/
