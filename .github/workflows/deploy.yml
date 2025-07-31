@@ -8,10 +8,12 @@ on:
     paths:
       - "terraform/**"
       - ".github/workflows/deploy.yml"
+      - "terraform.tfvars"
 
 env:
-  TF_WORKING_DIR: terraform
-  AWS_REGION: us-east-1
+ TF_WORKING_DIR: terraform
+ AWS_REGION: eu-west-1
+ TF_VAR_FILE: terraform.tfvars
 
 jobs:
   terraform:
@@ -32,13 +34,20 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/github-actions-oidc
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.12.2
+
+      - name: Bootstrap Terraform S3 Backend
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          chmod +x ./scripts/create_backend_bucket.sh
+          ./scripts/create_backend_bucket.sh
+        working-directory: .
 
       - name: Terraform Init
         run: terraform init -input=false
@@ -50,7 +59,7 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         run: |
-          terraform plan -input=false -out=tfplan
+          terraform plan -input=false -out=tfplan -var-file=../${{ env.TF_VAR_FILE }}
           terraform show -no-color tfplan > plan.txt
 
       - name: Comment PR with plan
@@ -65,7 +74,7 @@ jobs:
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve -var-file=../${{ env.TF_VAR_FILE }}
 
       - name: Configure kubectl
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -75,13 +84,5 @@ jobs:
       - name: Deploy Kubernetes manifests
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          kubectl apply -f manifests/
+          kubectl apply -f ../manifests/
 
-      - name: Configure kubectl
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name $(terraform output -raw cluster_name)
-
-      - name: Deploy Kubernetes manifests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: kubectl apply -f ../../manifests

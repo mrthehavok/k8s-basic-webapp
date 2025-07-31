@@ -1,6 +1,6 @@
 id: task-2
 title: "Automate AWS EKS Deployment with Terraform and GitHub Actions"
-status: "To Do"
+status: "Done"
 depends_on: ["task-1"]
 created: 2025-07-30
 updated: 2025-07-30
@@ -70,15 +70,34 @@ _alt-text: A diagram showing the CI/CD flow. A git push triggers a GitHub Action
 
 ## Session History
 
-<!-- Update as work progresses -->
+- **2025-07-30**:
+  - Created initial Terraform scaffold for VPC, EKS, and IAM OIDC.
+  - Built GitHub Actions workflow for plan/apply cycle.
+  - Added S3 backend bootstrap script (`scripts/create_backend_bucket.sh`).
+  - Centralised variables into a root `terraform.tfvars` file.
+  - Updated workflow to use the bootstrap script and root `tfvars` file.
+  - Updated `README.md` with new architecture and setup instructions.
+  - Pushed all changes to `feat/task-2-aws-automation` branch.
 
 ## Decisions Made
 
-<!-- Document key implementation decisions -->
+- Used official Terraform AWS modules for VPC and EKS to ensure best practices.
+- Implemented GitHub OIDC for secure, keyless authentication to AWS.
+- Centralised variables in a root `terraform.tfvars` to simplify configuration management.
+- Added an idempotent S3 bucket creation script to streamline the backend setup process.
 
 ## Files Modified
 
-<!-- Track all file changes -->
+- `.github/workflows/deploy.yml`
+- `terraform/versions.tf`
+- `terraform/variables.tf`
+- `terraform/main.tf`
+- `terraform/iam.tf`
+- `terraform/outputs.tf`
+- `scripts/create_backend_bucket.sh`
+- `terraform.tfvars`
+- `terraform.tfvars.example`
+- `README.md`
 
 ## Blockers
 

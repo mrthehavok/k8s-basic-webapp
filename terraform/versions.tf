@@ -6,28 +6,25 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.30"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.22"
-    }
   }
 
   backend "s3" {
     # TODO: replace with real bucket/key before first apply
-    bucket         = "CHANGE_ME-terraform-state"
-    key            = "eks/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "CHANGE_ME-terraform-lock"
+    bucket       = "k8s-tfstate-347913851454-eu-west-1"
+    key          = "eks/terraform.tfstate"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 
 provider "aws" {
   region = var.aws_region
-}
 
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.this.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
+  default_tags {
+    tags = {
+      created_by   = "terraform"
+      project_name = "k8s-basic-webapp"
+    }
+  }
 }

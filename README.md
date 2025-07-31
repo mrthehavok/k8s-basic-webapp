@@ -64,23 +64,33 @@ minikube delete
 ## AWS Infrastructure as Code (Terraform)
 
 ```
-terraform/
-┣ versions.tf       # providers & S3 backend
-┣ variables.tf      # input variables
-┣ main.tf           # VPC + EKS modules
-┣ iam.tf            # OIDC provider & GitHub Actions role
-┗ outputs.tf        # useful outputs
+.
+├── .github/workflows/deploy.yml  # CI/CD Pipeline
+├── manifests/                    # Kubernetes manifests
+├── scripts/
+│   └── create_backend_bucket.sh  # Idempotent S3 bootstrap
+├── terraform/
+│   ├── versions.tf               # Providers & S3 backend
+│   ├── variables.tf              # Variable definitions
+│   ├── main.tf                   # VPC + EKS modules
+│   ├── iam.tf                    # OIDC provider & GitHub Actions role
+│   └── outputs.tf                # Useful outputs
+└── terraform.tfvars              # Root variable values
 ```
 
 ### Prerequisites
 
-| Requirement                                                     | Why                        |
-| --------------------------------------------------------------- | -------------------------- |
-| **AWS account** with permissions to create VPC / EKS            | Infrastructure             |
-| **S3 bucket** + **DynamoDB table** for remote state             | Terraform backend          |
-| **GitHub OIDC provider** created once per account               | Keyless auth               |
-| **GitHub repository secret** `AWS_REGION` (default `us-east-1`) | Workflow region override   |
-| **OIDC-assumable IAM role** defined in `iam.tf`                 | Terraform / kubectl deploy |
+| Requirement                                            | Purpose / Usage                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| **AWS account** with permissions to create VPC / EKS   | Provisioning infrastructure                                |
+| **AWS CLI** configured for the target account / region | Required for the local bootstrap script & manual Terraform |
+| **Terraform CLI ≥ 1.5**                                | Local `terraform init / plan / apply` (optional)           |
+| **S3 bucket** for remote state                         | Backend for Terraform state & locking                      |
+| **GitHub OIDC provider** created once per account      | Key-less authentication from GitHub Actions                |
+| **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME`  | ARN of the IAM role to assume from the workflow            |
+| **Root `terraform.tfvars` file**                       | Centralised variable management                            |
+
+> _¹ The bucket and table are created automatically by the bootstrap script **or** by the CI pipeline if they don’t exist._
 
 > ℹ️ The OIDC provider and role will be created automatically by Terraform if they do not exist (first run requires elevated AWS credentials).
 
@@ -91,10 +101,10 @@ terraform/
 terraform -chdir=terraform init
 
 # Review changes
-terraform -chdir=terraform plan -var="github_repo=<owner>/<repo>"
+terraform -chdir=terraform plan -var-file=../terraform.tfvars
 
 # Apply (creates/updates infra)
-terraform -chdir=terraform apply
+terraform -chdir=terraform apply -var-file=../terraform.tfvars
 ```
 
 ---
@@ -109,7 +119,7 @@ terraform -chdir=terraform apply
    - `terraform plan` – plan posted as comment on the PR.
 
 2. **Merge to `main`**
-   - GitHub OIDC → AWS STS → Assume role `${var.cluster_name}-github-actions`.
+   - GitHub OIDC → AWS STS → Assume role via `secrets.AWS_IAM_ROLE_TO_ASSUME`.
    - `terraform apply` – builds/updates VPC & EKS.
    - `aws eks update-kubeconfig` – obtains cluster credentials.
    - `kubectl apply -f manifests/` – deploys the application.
@@ -120,20 +130,16 @@ No AWS keys are stored; short-lived credentials are exchanged at runtime.
 
 ## Bootstrap Checklist
 
-1. 🔑 Create an **S3 bucket** and **DynamoDB table**
+1. 🔑 **Bootstrap S3 Backend**
+   The **deploy** GitHub Actions workflow automatically runs the helper script on every PR and merge.
+   Local execution is only required if you want to run `terraform init/plan/apply` from your workstation:
    ```bash
-   aws s3 mb s3://<YOUR_BUCKET>
-   aws dynamodb create-table \
-     --table-name <YOUR_TABLE> \
-     --attribute-definitions AttributeName=LockID,AttributeType=S \
-     --key-schema AttributeName=LockID,KeyType=HASH \
-     --billing-mode PAY_PER_REQUEST
+   ./scripts/create_backend_bucket.sh
    ```
-2. 🔐 (First time) Add the GitHub OIDC provider in IAM **or** let Terraform create it.
-3. 📄 Update `terraform/versions.tf` backend block – replace `CHANGE_ME-terraform-state` & `CHANGE_ME-terraform-lock`.
-4. 💬 Add repository secret **`AWS_REGION`** (optional if using default).
-5. ✅ Open a Pull Request – ensure the **plan** appears.
-6. 🚀 Merge to `main` – the **apply** job provisions EKS and deploys the app.
+2. 📄 **Configure Variables**: Copy `terraform.tfvars.example` to `terraform.tfvars` and update the `github_repo` and other variables as needed.
+3. 🔐 **Configure Secrets**: Add the `AWS_IAM_ROLE_TO_ASSUME` secret to your GitHub repository settings, containing the ARN of the role created by `iam.tf`.
+4. ✅ **Open a Pull Request**: Ensure the **plan** appears, loading variables from `terraform.tfvars`.
+5. 🚀 Merge to `main` – the **apply** job provisions EKS and deploys the app.
 
 ---
 
