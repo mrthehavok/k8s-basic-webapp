@@ -67,6 +67,7 @@ jobs:
   kubernetes:
     name: Kubernetes
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     needs: terraform
 
     steps:
@@ -94,25 +95,25 @@ jobs:
           kubectl version --client
 
       - name: Get EKS token
-        if: github.event_name == 'pull_request'
         run: |
           aws eks get-token \
             --region $AWS_REGION \
-            --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) \
-            > /dev/null
+            --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) > /dev/null
 
-      - name: Kubernetes Diff (Pull Request)
-        if: false # Temporarily disabled due to auth issues
+      - name: Debug RBAC
         run: |
-          set -e
-          # Prefer server-side dry-run; fall back to basic diff if not supported
-          if kubectl diff --server-side -f k8s/; then
-            echo "Server-side diff succeeded."
-          else
-            echo "Server-side diff unavailable, falling back to client diff."
-            kubectl diff -f k8s/
-          fi
+          set -x
+          echo "---"
+          echo "1. VERIFYING KUBECTL CONTEXT AND IDENTITY"
+          kubectl config current-context
+          kubectl config view --minify --raw
+          echo "---"
+          echo "2. CHECKING API SERVER CONNECTIVITY (RAW)"
+          kubectl get --raw /healthz || echo "Connectivity check failed"
+          echo "---"
+          echo "3. CHECKING RBAC PERMISSIONS (AUTH CAN-I)"
+          kubectl auth can-i list pods --all-namespaces
+          echo "---"
 
-      - name: Kubernetes Apply (Push to main)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Kubernetes Apply
         run: kubectl apply -f k8s/
