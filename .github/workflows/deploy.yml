@@ -67,7 +67,7 @@ jobs:
   kubernetes:
     name: Kubernetes
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: terraform
 
     steps:
@@ -92,13 +92,15 @@ jobs:
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $(terraform -chdir="${{ env.TF_WORKING_DIR }}" output -raw cluster_name)
-          kubectl version --client
 
       - name: Get EKS token
         run: |
-          aws eks get-token \
-            --region $AWS_REGION \
-            --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) > /dev/null
+          aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name $(cd terraform && terraform output -raw cluster_name) > /dev/null
+
+      - name: Verify kubectl config
+        run: |
+          kubectl config current-context
+          kubectl version --client
 
       - name: Kubernetes Apply
         run: kubectl apply -f k8s/

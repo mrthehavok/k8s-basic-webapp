@@ -3,7 +3,7 @@ title: "Add Kubernetes Calculator Deployment"
 status: "In Progress"
 depends_on: ["task-2"]
 created: 2025-07-31
-updated: 2025-07-31T12:00:26.907Z
+updated: 2025-07-31T14:18:03.199Z
 
 ## Description
 
@@ -31,6 +31,7 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 11:52: Moved Kubernetes apply step to run on pull requests for faster debugging and added an explicit EKS token step.
 - 2025-07-31 11:57: Re-enabled the `aws-auth` ConfigMap in Terraform to fix the `Unauthorized` error during `kubectl apply`. Removed the temporary RBAC debugging step from the workflow.
 - 2025-07-31 12:00: Fixed Terraform `Unauthorized` error by configuring the Kubernetes provider to use `exec` authentication, allowing it to manage the `aws-auth` ConfigMap.
+- 2025-07-31 14:18: Fixed kubectl authentication error in CI/CD by ensuring the EKS token is retrieved before running kubectl commands.
 
 ## Decisions Made
 
@@ -48,6 +49,7 @@ Use the existing **manual** branch as an implementation reference.
 - **Added explicit EKS token step:** An `aws eks get-token` step was added to the `kubernetes` job to ensure `kubectl` is always authenticated before running `apply`.
 - **Re-enabled `aws-auth` ConfigMap management:** The `kubectl apply` command was failing with an `Unauthorized` error because the GitHub Actions IAM role was not mapped to a Kubernetes user. This was resolved by re-enabling the `kubernetes_config_map_v1_data.aws_auth` resource in Terraform, which grants the CI/CD role `system:masters` permissions.
 - **Configured Kubernetes provider with `exec` authentication:** The `terraform apply` command itself was failing with an `Unauthorized` error because the provider could not authenticate with the EKS cluster to manage the `aws-auth` ConfigMap. This was resolved by configuring the Kubernetes provider to use an `exec` block, which dynamically retrieves an EKS token, mirroring how `kubectl` authenticates. This allows Terraform to manage the `aws-auth` ConfigMap and add the necessary IAM role mappings.
+- **Ensured EKS token is obtained before kubectl commands:** The CI/CD pipeline was failing with an authentication error because `kubectl` was being run before the EKS authentication token was retrieved. The workflow was updated to run `aws eks get-token` before any `kubectl` commands are executed.
 
 ## Files Modified
 
