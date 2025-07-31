@@ -1,0 +1,18 @@
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: calculator-ingress
+#   annotations:
+#     # Ingress controller specific annotations would go here
+#     # e.g., kubernetes.io/ingress.class: "nginx"
+# spec:
+#   rules:
+#   - http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: calculator
+#             port:
+#               number: 80
