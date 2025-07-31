@@ -30,15 +30,12 @@ module "eks" {
       max_size     = 3
       desired_size = 2
 
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.micro"]
+      ami_type       = "AL2023_x86_64_STANDARD"
     }
   }
 }
 
-data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_name
-}
-
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
+# Data sources for EKS cluster are removed as they are not currently used
+# and cause a dependency cycle during initial creation.
+# They can be added back when Kubernetes resources are managed via Terraform.
