@@ -163,3 +163,23 @@ Please follow the [commit style conventions](AGENTS.md:1) and open issues for fe
 ## License
 
 MIT
+
+## Calculator Application
+
+### Build
+
+To build the Docker image for the calculator application, run the following command from the root of the repository:
+
+```bash
+docker build -t ghcr.io/&lt;owner&gt;/calculator:latest .
+```
+
+The image will also be built automatically by a GitHub Actions workflow when changes are pushed to the `feat/task-3-k8s-calculator` branch.
+
+### Deploy
+
+To deploy the application to a Kubernetes cluster, apply the manifests in the `k8s/` directory:
+
+```bash
+kubectl apply -f k8s/
+```
