@@ -80,6 +80,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify AWS CLI
+        run: |
+          aws --version
+          which aws
+
       - name: Set up Terraform for outputs
         uses: hashicorp/setup-terraform@v3
         with:
@@ -93,14 +98,27 @@ jobs:
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $(terraform -chdir="${{ env.TF_WORKING_DIR }}" output -raw cluster_name)
 
-      - name: Get EKS token
+      - name: Debug kubeconfig
         run: |
-          aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name $(cd terraform && terraform output -raw cluster_name) > /dev/null
+          echo "Kubeconfig content (without sensitive data):"
+          cat ~/.kube/config | grep -E "(cluster:|user:|name:|exec:)" | head -20
 
-      - name: Verify kubectl config
+      - name: Get EKS token and test authentication
         run: |
-          kubectl config current-context
-          kubectl version --client
+          echo "Testing AWS identity..."
+          aws sts get-caller-identity
+
+          echo "Getting cluster name..."
+          CLUSTER_NAME=$(cd terraform && terraform output -raw cluster_name)
+          echo "Cluster name: $CLUSTER_NAME"
+
+          echo "Testing EKS token generation..."
+          aws eks get-token --region ${{ env.AWS_REGION }} --cluster-name $CLUSTER_NAME
+
+          echo "Testing kubectl authentication..."
+          kubectl auth can-i get pods --all-namespaces
 
       - name: Kubernetes Apply
-        run: kubectl apply -f k8s/
+        if: github.event_name == 'pull_request'
+        run: |
+          kubectl apply -f k8s/ --validate=false

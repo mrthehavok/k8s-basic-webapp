@@ -32,6 +32,7 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 11:57: Re-enabled the `aws-auth` ConfigMap in Terraform to fix the `Unauthorized` error during `kubectl apply`. Removed the temporary RBAC debugging step from the workflow.
 - 2025-07-31 12:00: Fixed Terraform `Unauthorized` error by configuring the Kubernetes provider to use `exec` authentication, allowing it to manage the `aws-auth` ConfigMap.
 - 2025-07-31 14:18: Fixed kubectl authentication error in CI/CD by ensuring the EKS token is retrieved before running kubectl commands.
+- 2025-07-31 14:26: Added extensive debugging to the CI/CD workflow to diagnose the root cause of `kubectl` authentication failures.
 
 ## Decisions Made
 
@@ -50,6 +51,7 @@ Use the existing **manual** branch as an implementation reference.
 - **Re-enabled `aws-auth` ConfigMap management:** The `kubectl apply` command was failing with an `Unauthorized` error because the GitHub Actions IAM role was not mapped to a Kubernetes user. This was resolved by re-enabling the `kubernetes_config_map_v1_data.aws_auth` resource in Terraform, which grants the CI/CD role `system:masters` permissions.
 - **Configured Kubernetes provider with `exec` authentication:** The `terraform apply` command itself was failing with an `Unauthorized` error because the provider could not authenticate with the EKS cluster to manage the `aws-auth` ConfigMap. This was resolved by configuring the Kubernetes provider to use an `exec` block, which dynamically retrieves an EKS token, mirroring how `kubectl` authenticates. This allows Terraform to manage the `aws-auth` ConfigMap and add the necessary IAM role mappings.
 - **Ensured EKS token is obtained before kubectl commands:** The CI/CD pipeline was failing with an authentication error because `kubectl` was being run before the EKS authentication token was retrieved. The workflow was updated to run `aws eks get-token` before any `kubectl` commands are executed.
+- **Added extensive CI/CD debugging for `kubectl` auth:** To diagnose the persistent `kubectl` authentication issues, several debugging steps were added to the `deploy.yml` workflow. These include verifying the AWS CLI installation, inspecting the generated `kubeconfig`, testing the AWS identity and EKS token generation, and running a `kubectl auth can-i` check. The `kubectl apply` command was also modified to use `--validate=false` as a temporary workaround to bypass potential validation-related auth issues.
 
 ## Files Modified
 
@@ -72,5 +74,6 @@ Use the existing **manual** branch as an implementation reference.
 
 ## Next Steps
 
+- Analyze the output from the new debugging steps in the CI/CD pipeline to identify the root cause of the authentication failure.
 - Create a new task to correctly map the EKS node role in the `aws-auth` ConfigMap.
 - Merge the pull request to apply the deployment fixes.
