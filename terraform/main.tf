@@ -63,14 +63,6 @@ resource "kubernetes_config_map_v1_data" "aws_auth" {
     mapRoles = yamlencode(
       [
         {
-          rolearn  = module.eks.eks_managed_node_group_roles["default"].arn
-          username = "system:node:{{EC2PrivateDNSName}}"
-          groups = [
-            "system:bootstrappers",
-            "system:nodes",
-          ]
-        },
-        {
           rolearn  = aws_iam_role.github_actions.arn
           username = "github-actions"
           groups = [

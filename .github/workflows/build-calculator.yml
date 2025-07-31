@@ -3,10 +3,10 @@ name: Build and Push Calculator Image
 on:
   push:
     branches:
-      - "feat/task-3-k8s-calculator"
+      - "main"
   pull_request:
     branches:
-      - "feat/task-3-k8s-calculator"
+      - "main"
 
 jobs:
   build-and-push:
