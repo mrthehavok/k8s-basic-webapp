@@ -84,5 +84,5 @@ jobs:
       - name: Deploy Kubernetes manifests
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          kubectl apply -f ../manifests/
+          kubectl apply -f ../k8s/
 
