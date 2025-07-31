@@ -15,14 +15,16 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.8.4"
+  version = "20.10.0"
 
   cluster_name    = var.cluster_name
-  cluster_version = "1.33"
+  cluster_version = "1.30"
   subnet_ids      = module.vpc.private_subnets
   vpc_id          = module.vpc.vpc_id
 
   enable_irsa = true
+
+  # use externally-managed IAM role to avoid inline_policy warning
 
   eks_managed_node_groups = {
     default = {
@@ -32,6 +34,7 @@ module "eks" {
 
       instance_types = ["t3.micro"]
       ami_type       = "AL2023_x86_64_STANDARD"
+      iam_role_arn   = aws_iam_role.eks_node.arn
     }
   }
 }
