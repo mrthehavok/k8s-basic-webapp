@@ -22,6 +22,7 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 09:44: Agent started work. Created Flask application, Dockerfile, GitHub Actions workflow, Kubernetes manifests, and updated README.
 - 2025-07-31 11:00: Resolved multiple deployment failures by fixing Terraform configuration and enhancing the CI/CD pipeline.
 - 2025-07-31 11:07: Split the deployment workflow into distinct Terraform and Kubernetes jobs, adding dry-run checks for pull requests.
+- 2025-07-31 11:14: Fixed `kubectl version` flag and added path filters to the build workflow to prevent unnecessary runs.
 
 ## Decisions Made
 
@@ -29,6 +30,7 @@ Use the existing **manual** branch as an implementation reference.
 - **Managed `aws-auth` ConfigMap via Terraform:** The CI/CD pipeline was failing because the GitHub Actions IAM role was not authorized to access the cluster. This was resolved by adding a `kubernetes_config_map_v1_data` resource to manage the `aws-auth` ConfigMap, granting the necessary permissions to the CI/CD role.
 - **Split workflow into Terraform and Kubernetes jobs:** The `deploy.yml` workflow was refactored into two separate jobs. The `terraform` job handles infrastructure provisioning (`plan` on PR, `apply` on merge), while the `kubernetes` job manages the application deployment (`diff` on PR, `apply` on merge). This separation ensures the cluster is ready before the application is deployed and provides clear, independent verification steps for both layers.
 - **Temporarily removed EKS node role from `aws-auth`:** A `terraform plan` failure was caused by an incorrect reference to the EKS node group role ARN. The reference was temporarily removed to unblock the pipeline. This will need to be addressed in a future task to ensure nodes can join the cluster correctly.
+- **Optimized CI/CD Triggers and Commands:** Adjusted the `deploy.yml` workflow to use `kubectl version --client --short` to resolve an unsupported flag error. Added path filters to `build-calculator.yml` to ensure the workflow only runs when relevant files (`Dockerfile`, `calculator/**`) are changed, conserving CI resources.
 
 ## Files Modified
 

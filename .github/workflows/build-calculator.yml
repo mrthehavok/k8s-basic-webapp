@@ -4,9 +4,17 @@ on:
   push:
     branches:
       - "main"
+    paths:
+      - "Dockerfile"
+      - "calculator/**"
+      - ".github/workflows/build-calculator.yml"
   pull_request:
     branches:
       - "main"
+    paths:
+      - "Dockerfile"
+      - "calculator/**"
+      - ".github/workflows/build-calculator.yml"
 
 jobs:
   build-and-push:
