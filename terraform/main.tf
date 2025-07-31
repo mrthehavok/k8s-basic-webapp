@@ -42,3 +42,44 @@ module "eks" {
 # Data sources for EKS cluster are removed as they are not currently used
 # and cause a dependency cycle during initial creation.
 # They can be added back when Kubernetes resources are managed via Terraform.
+
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+resource "kubernetes_config_map_v1_data" "aws_auth" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    mapRoles = yamlencode(
+      [
+        {
+          rolearn  = module.eks.eks_managed_node_group_roles["default"].arn
+          username = "system:node:{{EC2PrivateDNSName}}"
+          groups = [
+            "system:bootstrappers",
+            "system:nodes",
+          ]
+        },
+        {
+          rolearn  = aws_iam_role.github_actions.arn
+          username = "github-actions"
+          groups = [
+            "system:masters",
+          ]
+        }
+      ]
+    )
+  }
+
+  depends_on = [module.eks]
+}
