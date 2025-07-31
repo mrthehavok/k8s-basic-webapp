@@ -95,30 +95,14 @@ jobs:
 
       - name: Kubernetes Diff (Pull Request)
         if: github.event_name == 'pull_request'
-        id: diff
         run: |
-          # Use server-side dry run first, with a fallback to client-side diff
-          DIFF_OUTPUT=$(kubectl diff -f k8s/ --server-dry-run=true 2>&1)
-          EXIT_CODE=$?
-
-          if [[ $EXIT_CODE -ne 0 && $EXIT_CODE -ne 1 ]]; then
-            echo "Server-side dry run failed. Falling back to client-side diff."
-            DIFF_OUTPUT=$(kubectl diff -f k8s/ 2>&1)
-            EXIT_CODE=$?
-          fi
-
-          echo "### Kubernetes Diff" >> $GITHUB_STEP_SUMMARY
-          echo "<details><summary>Click to expand</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```diff' >> $GITHUB_STEP_SUMMARY
-          echo "$DIFF_OUTPUT" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
-
-          # Exit with an error only if the command failed for reasons other than finding a diff.
-          # Exit code 1 means a diff was found, which is expected.
-          if [[ $EXIT_CODE -ne 0 && $EXIT_CODE -ne 1 ]]; then
-            exit $EXIT_CODE
+          set -e
+          # Prefer server-side dry-run; fall back to basic diff if not supported
+          if kubectl diff --server-side -f k8s/; then
+            echo "Server-side diff succeeded."
+          else
+            echo "Server-side diff unavailable, falling back to client diff."
+            kubectl diff -f k8s/
           fi
 
       - name: Kubernetes Apply (Push to main)

@@ -24,6 +24,7 @@ Use the existing **manual** branch as an implementation reference.
 - 2025-07-31 11:07: Split the deployment workflow into distinct Terraform and Kubernetes jobs, adding dry-run checks for pull requests.
 - 2025-07-31 11:14: Fixed `kubectl version` flag and added path filters to the build workflow to prevent unnecessary runs.
 - 2025-07-31 11:20: Fixed unsupported `--short` flag in `kubectl version --client` command after CI failure.
+- 2025-07-31 11:24: Replaced `kubectl diff` with a robust fallback to handle clusters that do not support server-side dry runs.
 
 ## Decisions Made
 
@@ -33,6 +34,7 @@ Use the existing **manual** branch as an implementation reference.
 - **Temporarily removed EKS node role from `aws-auth`:** A `terraform plan` failure was caused by an incorrect reference to the EKS node group role ARN. The reference was temporarily removed to unblock the pipeline. This will need to be addressed in a future task to ensure nodes can join the cluster correctly.
 - **Optimized CI/CD Triggers and Commands:** Adjusted the `deploy.yml` workflow to use `kubectl version --client --short` to resolve an unsupported flag error. Added path filters to `build-calculator.yml` to ensure the workflow only runs when relevant files (`Dockerfile`, `calculator/**`) are changed, conserving CI resources.
 - **Dropped `--short` flag from `kubectl version`:** The `--short` flag is not supported by the `kubectl` version on the GitHub Actions runner, causing CI failures. The flag was removed to ensure compatibility.
+- **Switched to conditional server-side diff:** The Kubernetes diff step in the CI pipeline now attempts a server-side dry run and falls back to a client-side diff if the server-side operation is not supported. This prevents the workflow from failing on clusters with older Kubernetes versions.
 
 ## Files Modified
 
