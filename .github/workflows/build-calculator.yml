@@ -3,10 +3,18 @@ name: Build and Push Calculator Image
 on:
   push:
     branches:
-      - "feat/task-3-k8s-calculator"
+      - "main"
+    paths:
+      - "Dockerfile"
+      - "calculator/**"
+      - ".github/workflows/build-calculator.yml"
   pull_request:
     branches:
-      - "feat/task-3-k8s-calculator"
+      - "main"
+    paths:
+      - "Dockerfile"
+      - "calculator/**"
+      - ".github/workflows/build-calculator.yml"
 
 jobs:
   build-and-push:

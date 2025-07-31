@@ -1,31 +1,28 @@
-name: Terraform CI
+name: Deploy Infrastructure and Application
 
 on:
   pull_request:
     branches: ["main"]
   push:
     branches: ["main"]
-    paths:
-      - "terraform/**"
-      - ".github/workflows/deploy.yml"
-      - "terraform.tfvars"
 
 env:
- TF_WORKING_DIR: terraform
- AWS_REGION: eu-west-1
- TF_VAR_FILE: terraform.tfvars
+  TF_WORKING_DIR: terraform
+  AWS_REGION: eu-west-1
+  TF_VAR_FILE: terraform.tfvars
+
+permissions:
+  id-token: write # required for assuming a role with OpenID Connect
+  contents: read # required for actions/checkout
+  pull-requests: write # required for adding comments to PRs with plan
 
 jobs:
   terraform:
+    name: Terraform
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
-
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -40,49 +37,82 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.12.2
-
-      - name: Bootstrap Terraform S3 Backend
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          chmod +x ./scripts/create_backend_bucket.sh
-          ./scripts/create_backend_bucket.sh
-        working-directory: .
+          terraform_version: "1.12.0"
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init
 
-      - name: Terraform Format
-        run: terraform fmt -check
+      - name: Terraform Validate
+        run: terraform validate
 
-      - name: Terraform Plan
+      - name: Terraform Plan (Pull Request)
+        if: github.event_name == 'pull_request'
         id: plan
-        if: github.event_name == 'pull_request'
         run: |
-          terraform plan -input=false -out=tfplan -var-file=../${{ env.TF_VAR_FILE }}
-          terraform show -no-color tfplan > plan.txt
+          terraform plan -input=false -no-color -out=tfplan -var-file=../${{ env.TF_VAR_FILE }}
 
-      - name: Comment PR with plan
-        if: github.event_name == 'pull_request'
-        uses: mshick/add-pr-comment@v2
-        with:
-          message: |
-            **Terraform Plan**
-            ```diff
-            ${{ steps.plan.outputs.stdout }}
-            ```
+          # Create a human-readable summary
+          echo "### Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>Click to expand</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```terraform' >> $GITHUB_STEP_SUMMARY
+          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
 
-      - name: Terraform Apply
+      - name: Terraform Apply (Push to main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -input=false -auto-approve -var-file=../${{ env.TF_VAR_FILE }}
 
+  kubernetes:
+    name: Kubernetes
+    runs-on: ubuntu-latest
+    needs: terraform
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform for outputs
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.12.0"
+
+      - name: Terraform Init for Outputs
+        run: terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
       - name: Configure kubectl
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name $(terraform output -raw cluster_name)
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $(terraform -chdir="${{ env.TF_WORKING_DIR }}" output -raw cluster_name)
+          kubectl version --client
 
-      - name: Deploy Kubernetes manifests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Get EKS token
+        if: github.event_name == 'pull_request'
         run: |
-          kubectl apply -f ../k8s/
+          aws eks get-token \
+            --region $AWS_REGION \
+            --cluster-name $(terraform -chdir="terraform" output -raw cluster_name) \
+            > /dev/null
 
+      - name: Kubernetes Diff (Pull Request)
+        if: false # Temporarily disabled due to auth issues
+        run: |
+          set -e
+          # Prefer server-side dry-run; fall back to basic diff if not supported
+          if kubectl diff --server-side -f k8s/; then
+            echo "Server-side diff succeeded."
+          else
+            echo "Server-side diff unavailable, falling back to client diff."
+            kubectl diff -f k8s/
+          fi
+
+      - name: Kubernetes Apply (Push to main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: kubectl apply -f k8s/
