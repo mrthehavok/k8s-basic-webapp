@@ -17,15 +17,27 @@ Upgrade the EKS cluster to Kubernetes 1.32 and prove deployments succeed. Add a 
 
 ## Session History
 
-<!-- Update as work progresses -->
+- 2025-08-01: Started work on task-7.
+- 2025-08-01: Updated Terraform to use Kubernetes 1.32.
+- 2025-08-01: Refreshed frontend UI with new button styles.
+- 2025-08-01: Added `/health` endpoint to backend application.
+- 2025-08-01: Added smoke test to CI/CD deploy workflow.
+- 2025-08-01: Updated task statuses for task-6 and task-7.
 
 ## Decisions Made
 
-<!-- Document key implementation decisions -->
+- Added a `/health` endpoint to the backend for the smoke test.
+- Added a smoke test to the CI/CD pipeline to verify deployment health.
+- Updated the UI with CSS for a modern look and feel.
 
 ## Files Modified
 
-<!-- Track all file changes -->
+- `terraform/main.tf`
+- `frontend/index.html`
+- `backend/calculator/app.py`
+- `.github/workflows/deploy.yml`
+- `backlog/tasks/task-6 - Polish Codebase and CI-CD.md`
+- `backlog/tasks/task-7 - Upgrade to K8s 1.32 and Improve UI.md`
 
 ## Blockers
 
