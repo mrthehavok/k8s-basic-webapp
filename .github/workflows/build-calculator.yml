@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "feat/task-5-enhance-calculator-exp-eval"
     paths:
       - "Dockerfile"
       - "backend/**"
@@ -41,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ghcr.io/${{ github.repository }}/calculator:${{ github.sha }}
             ghcr.io/${{ github.repository }}/calculator:latest

@@ -18,6 +18,7 @@ spec:
       containers:
         - name: calculator
           image: ghcr.io/mrthehavok/k8s-basic-webapp/calculator:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:

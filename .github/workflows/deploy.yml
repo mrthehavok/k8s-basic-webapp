@@ -3,12 +3,15 @@ name: Deploy Infrastructure and Application
 on:
   pull_request:
     branches: ["main"]
+    paths:
+      - "terraform/**"
+      - "k8s/**"
+      - ".github/workflows/deploy.yml"
   push:
     branches: ["main"]
     paths:
-      - "backend/**"
-      - "frontend/**"
-      - "Dockerfile"
+      - "terraform/**"
+      - "k8s/**"
       - ".github/workflows/deploy.yml"
 
 env:
@@ -72,7 +75,7 @@ jobs:
   kubernetes:
     name: Kubernetes
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: needs.terraform.result == 'success'
     needs: terraform
 
     steps:
@@ -132,6 +135,9 @@ jobs:
           kubectl diff -f k8s/ --namespace calculator || true
 
       - name: Kubernetes Apply
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          kubectl apply -f k8s/ --namespace calculator
+          # Use kustomize to set the new image tag and apply the manifests
+          kustomize edit set image ghcr.io/${{ github.repository }}/calculator=ghcr.io/${{ github.repository }}/calculator:${{ github.sha }}
+          kubectl apply -k . -n calculator
+        working-directory: k8s
