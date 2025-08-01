@@ -3,12 +3,15 @@ name: Deploy Infrastructure and Application
 on:
   pull_request:
     branches: ["main"]
+    paths:
+      - "terraform/**"
+      - "k8s/**"
+      - ".github/workflows/deploy.yml"
   push:
     branches: ["main"]
     paths:
-      - "backend/**"
-      - "frontend/**"
-      - "Dockerfile"
+      - "terraform/**"
+      - "k8s/**"
       - ".github/workflows/deploy.yml"
 
 env:
@@ -72,7 +75,7 @@ jobs:
   kubernetes:
     name: Kubernetes
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: needs.terraform.result == 'success'
     needs: terraform
 
     steps:
@@ -128,10 +131,37 @@ jobs:
 
       - name: Kubernetes Diff
         if: github.event_name == 'pull_request'
+        id: k8s_diff
         run: |
-          kubectl diff -f k8s/ --namespace calculator || true
+          # Build manifests first. If kustomize fails, the step will fail.
+          kustomize build k8s > /tmp/manifests.yaml
+
+          # Diff the generated manifests, saving the output.
+          # `kubectl diff` exits 1 if a diff is found; `|| true` prevents this from failing the step.
+          kubectl diff --namespace calculator -f /tmp/manifests.yaml > /tmp/k8s.diff || true
+
+          # Print the diff to the logs for immediate visibility.
+          cat /tmp/k8s.diff
+
+          # Set the multiline diff output for the next step using a heredoc.
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/k8s.diff >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Append k8s diff to summary
+        if: always() && steps.k8s_diff.outputs.diff != ''
+        run: |
+          {
+            echo '### Kubernetes Diff';
+            echo '```diff';
+            echo "${{ steps.k8s_diff.outputs.diff }}";
+            echo '```';
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Kubernetes Apply
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          kubectl apply -f k8s/ --namespace calculator
+          # Use kustomize to set the new image tag and apply the manifests
+          kustomize edit set image ghcr.io/${{ github.repository }}/calculator=ghcr.io/${{ github.repository }}/calculator:${{ github.sha }}
+          kubectl apply -k . -n calculator
+        working-directory: k8s
