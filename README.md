@@ -75,7 +75,7 @@ The application will be available at `http://localhost:8000`.
 | **GitHub repository secret** `AWS_IAM_ROLE_TO_ASSUME`  | ARN of the IAM role to assume from the workflow            |
 | **Root `terraform.tfvars` file**                       | Centralised variable management                            |
 
-> _¹ The bucket and table are created automatically by the bootstrap script **or** by the CI pipeline if they don’t exist._
+> _¹ The bucket is created automatically by the bootstrap script **or** by the CI pipeline if it don’t exist._
 
 > ℹ️ The OIDC provider and role will be created automatically by Terraform if they do not exist (first run requires elevated AWS credentials).
 
@@ -170,11 +170,10 @@ The **`manual`** branch is reserved for _ad-hoc or experimental changes_ that yo
 
 ## Troubleshooting & FAQ
 
-| Symptom                          | Resolution                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------- |
-| `Error acquiring the state lock` | Verify DynamoDB table exists & ensure no pending lock rows.                     |
-| GitHub Action `AccessDenied`     | Confirm OIDC role trust policy includes `repo:<owner>/<repo>` & correct branch. |
-| Load balancer not created        | Check AWS ALB Ingress Controller logs and VPC subnets are tagged for ELB.       |
+| Symptom                      | Resolution                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| GitHub Action `AccessDenied` | Confirm OIDC role trust policy includes `repo:<owner>/<repo>` & correct branch. |
+| Load balancer not created    | Check AWS ALB Ingress Controller logs and VPC subnets are tagged for ELB.       |
 
 ---
 
