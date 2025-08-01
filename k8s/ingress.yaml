@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: calculator-ingress
   namespace: calculator
+  labels:
+    app: calculator
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
