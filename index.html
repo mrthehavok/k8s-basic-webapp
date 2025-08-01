@@ -1,38 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Basic Webapp - Calculator</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Basic Webapp</h1>
     <section id="calculator">
-        <h2>Calculator</h2>
-        <input type="number" id="num1" placeholder="Number 1">
-        <input type="number" id="num2" placeholder="Number 2">
-        <button data-op="add">+</button>
-        <button data-op="subtract">-</button>
-        <button data-op="multiply">*</button>
-        <button data-op="divide">/</button>
-        <p id="result"></p>
+      <h2>Expression Calculator</h2>
+      <input
+        type="text"
+        id="expr"
+        placeholder="Enter an expression, e.g., (3+5)*2"
+        size="50"
+      />
+      <button id="calculateBtn">Calculate</button>
+      <p id="result"></p>
     </section>
-<script>
-    document.querySelectorAll('#calculator button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const a = document.getElementById('num1').value;
-            const b = document.getElementById('num2').value;
-            const op = btn.dataset.op;
-            fetch(`/api/calculate?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}&op=${encodeURIComponent(op)}`)
-                .then(resp => resp.json())
-                .then(data => {
-                    const resEl = document.getElementById('result');
-                    resEl.textContent = data.result !== undefined ? data.result : data.error;
-                })
-                .catch(() => {
-                    document.getElementById('result').textContent = 'Error';
-                });
-        });
-    });
-</script>
-</body>
+    <script>
+      document.getElementById("calculateBtn").addEventListener("click", () => {
+        const expr = document.getElementById("expr").value;
+        fetch(`/api/evaluate?expr=${encodeURIComponent(expr)}`)
+          .then((resp) => resp.json())
+          .then((data) => {
+            const resEl = document.getElementById("result");
+            resEl.textContent =
+              data.result !== undefined
+                ? `Result: ${data.result}`
+                : `Error: ${data.error}`;
+          })
+          .catch(() => {
+            document.getElementById("result").textContent =
+              "An unexpected error occurred.";
+          });
+      });
+    </script>
+  </body>
 </html>
