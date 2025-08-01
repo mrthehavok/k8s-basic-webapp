@@ -1,6 +1,6 @@
 id: task-5
 title: "Enhance Calculator Expression Evaluation"
-status: "In Progress"
+status: "Done"
 depends_on: ["task-4"]
 created: 2025-08-01
 updated: 2025-08-01
@@ -39,17 +39,28 @@ Supported elements:
 
 ## Session History
 
+- 2025-08-01T12:01:42Z: Created branch `feat/task-5-enhance-calculator-exp-eval` and began development.
 - 2025-08-01T12:14:20Z: Implemented `/api/evaluate` endpoint with `sympy` parser. Added unit tests and passed them locally.
+- 2025-08-01T12:27:53Z: Restructured project into `backend/` and `frontend/` directories. Updated Dockerfile and CI workflows with path filtering.
+- 2025-08-01T12:42:35Z: Fixed frontend serving path in Flask to use an absolute path.
+- 2025-08-01T12:45:55Z: Verified application accessible; task completed and ready for closure.
 
 ## Decisions Made
 
 - Used `sympy` for safe expression evaluation to prevent security risks associated with `eval()`.
 
+- Restructured project to separate frontend and backend concerns for better CI/CD.
+- Kept workflows in `.github/workflows` but added path filters to trigger builds only when relevant code changes.
+
 ## Files Modified
 
-- `calculator/app.py`
-- `calculator/requirements.txt`
-- `calculator/test_evaluate.py`
+- `backend/calculator/app.py`
+- `backend/calculator/requirements.txt`
+- `backend/calculator/test_evaluate.py`
+- `frontend/index.html`
+- `Dockerfile`
+- `.github/workflows/build-calculator.yml`
+- `.github/workflows/deploy.yml`
 
 ## Blockers
 

@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify, send_from_directory
 from sympy import sympify, SympifyError, log, sqrt, zoo
 from sympy.core.numbers import Number
+from pathlib import Path
 
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
-    return send_from_directory(".", "index.html")
+    # Derive the absolute path to the frontend directory:
+    # <repo_root>/frontend, regardless of current working directory.
+    frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
+    return send_from_directory(frontend_dir, "index.html")
 
 @app.route('/add', methods=['POST'])
 def add():

@@ -5,14 +5,16 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy the dependencies file to the working directory
-COPY calculator/requirements.txt .
+COPY backend/calculator/requirements.txt ./backend/calculator/
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r backend/calculator/requirements.txt
 
 # Copy the content of the local src directory to the working directory
-COPY calculator/ .
-COPY index.html ./
+COPY backend/ ./backend
+COPY frontend/ ./frontend
+
+WORKDIR /app/backend/calculator
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000

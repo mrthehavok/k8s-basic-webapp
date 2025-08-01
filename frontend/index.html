@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Basic Webapp - Calculator</title>
+  </head>
+  <body>
+    <h1>Basic Webapp</h1>
+    <section id="calculator">
+      <h2>Expression Calculator</h2>
+      <input
+        type="text"
+        id="expr"
+        placeholder="Enter an expression, e.g., (3+5)*2"
+        size="50"
+      />
+      <button id="calculateBtn">Calculate</button>
+      <p id="result"></p>
+    </section>
+    <script>
+      document.getElementById("calculateBtn").addEventListener("click", () => {
+        const expr = document.getElementById("expr").value;
+        fetch(`/api/evaluate?expr=${encodeURIComponent(expr)}`)
+          .then((resp) => resp.json())
+          .then((data) => {
+            const resEl = document.getElementById("result");
+            resEl.textContent =
+              data.result !== undefined
+                ? `Result: ${data.result}`
+                : `Error: ${data.error}`;
+          })
+          .catch(() => {
+            document.getElementById("result").textContent =
+              "An unexpected error occurred.";
+          });
+      });
+    </script>
+  </body>
+</html>
