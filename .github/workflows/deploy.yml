@@ -5,6 +5,11 @@ on:
     branches: ["main"]
   push:
     branches: ["main"]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "Dockerfile"
+      - ".github/workflows/deploy.yml"
 
 env:
   TF_WORKING_DIR: terraform

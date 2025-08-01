@@ -4,17 +4,19 @@ on:
   push:
     branches:
       - "main"
-      - "feat/task-3-deploy-calculator" # Temporary for testing
+      - "feat/task-5-enhance-calculator-exp-eval"
     paths:
       - "Dockerfile"
-      - "calculator/**"
+      - "backend/**"
+      - "frontend/**"
       - ".github/workflows/build-calculator.yml"
   pull_request:
     branches:
       - "main"
     paths:
       - "Dockerfile"
-      - "calculator/**"
+      - "backend/**"
+      - "frontend/**"
       - ".github/workflows/build-calculator.yml"
 
 jobs:
