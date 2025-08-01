@@ -1,6 +1,6 @@
 id: task-6
 title: "Polish Codebase and CI/CD"
-status: "To Do"
+status: "Done"
 depends_on: ["task-5"]
 created: 2025-08-01
 updated: 2025-08-01
@@ -29,15 +29,20 @@ This task focuses on refining the existing CI/CD pipeline, improving documentati
 
 ## Session History
 
-<!-- Update as work progresses -->
+- 2025-08-01: Completed all acceptance criteria for task-6.
 
 ## Decisions Made
 
-<!-- Document key implementation decisions -->
+- Refactored CI/CD workflows for clarity and correctness, separating plan/diff from apply stages.
+- Updated documentation to reflect current project structure.
+- Identified and documented architectural improvements for future work.
 
 ## Files Modified
 
-<!-- Track all file changes -->
+- `.github/workflows/build-calculator.yml`
+- `.github/workflows/deploy.yml`
+- `README.md`
+- `ARCHITECTURAL_IMPROVEMENTS.md`
 
 ## Blockers
 

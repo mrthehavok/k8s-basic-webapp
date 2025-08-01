@@ -13,6 +13,10 @@ def index():
     frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
     return send_from_directory(frontend_dir, "index.html")
 
+@app.route("/health")
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/add', methods=['POST'])
 def add():
     data = request.get_json()
