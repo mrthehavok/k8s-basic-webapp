@@ -28,3 +28,12 @@ override.tf.json
 kubeconfig
 .kube/
 
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
