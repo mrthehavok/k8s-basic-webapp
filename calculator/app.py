@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
+from sympy import sympify, SympifyError, log, sqrt, zoo
+from sympy.core.numbers import Number
 
 app = Flask(__name__)
 
@@ -79,6 +81,43 @@ def calculate():
             return jsonify({'error': 'Division by zero'}), 400
         result = a_val / b_val
     return jsonify({'result': result})
+
+
+@app.route("/api/evaluate")
+def evaluate():
+    expr = request.args.get('expr')
+    if not expr:
+        return jsonify({"error": "Missing 'expr' parameter"}), 400
+
+    try:
+        # Define allowed functions for sympify
+        allowed_locals = {
+            "sqrt": sqrt,
+            "log": log,
+        }
+        
+        # Safely evaluate the expression
+        # The expression is first parsed by sympify, then evaluated to a float.
+        # locals are restricted to prevent arbitrary code execution.
+        result = sympify(expr, locals=allowed_locals).evalf()
+
+        # Check for infinity, which indicates division by zero
+        if result in (zoo, -zoo):
+            raise ZeroDivisionError
+
+        # Ensure the result is a number, not a symbolic expression
+        if not isinstance(result, Number) or result.has(zoo, -zoo):
+            raise SympifyError("Invalid expression")
+
+        return jsonify({"result": float(result)})
+
+    except (SympifyError, TypeError):
+        return jsonify({"error": "Invalid expression syntax"}), 400
+    except ZeroDivisionError:
+        return jsonify({"error": "Division by zero"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid value in expression"}), 400
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
