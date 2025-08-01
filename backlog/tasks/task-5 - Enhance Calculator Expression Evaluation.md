@@ -39,13 +39,16 @@ Supported elements:
 
 ## Session History
 
+
 - 2025-08-01T12:01:42Z: Created branch `feat/task-5-enhance-calculator-exp-eval` and began development.
 - 2025-08-01T12:14:20Z: Implemented `/api/evaluate` endpoint with `sympy` parser. Added unit tests and passed them locally.
 - 2025-08-01T12:27:53Z: Restructured project into `backend/` and `frontend/` directories. Updated Dockerfile and CI workflows with path filtering.
 
+
 ## Decisions Made
 
 - Used `sympy` for safe expression evaluation to prevent security risks associated with `eval()`.
+
 - Restructured project to separate frontend and backend concerns for better CI/CD.
 - Kept workflows in `.github/workflows` but added path filters to trigger builds only when relevant code changes.
 
