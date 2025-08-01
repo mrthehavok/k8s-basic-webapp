@@ -1,6 +1,6 @@
-d: task-7
+id: task-7
 title: "Upgrade to Kubernetes 1.32 & UI polish"
-status: "To Do"
+status: "In Progress"
 created: 2025-08-01
 updated: 2025-08-01
 

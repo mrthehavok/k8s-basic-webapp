@@ -165,3 +165,12 @@ jobs:
           kustomize edit set image ghcr.io/${{ github.repository }}/calculator=ghcr.io/${{ github.repository }}/calculator:${{ github.sha }}
           kubectl apply -k . -n calculator
         working-directory: k8s
+
+      - name: Smoke Test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Waiting for load balancer to be ready..."
+          sleep 60
+          SERVICE_URL=$(kubectl get svc -n calculator calculator-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Service URL: $SERVICE_URL"
+          curl -fsS "http://$SERVICE_URL/health"

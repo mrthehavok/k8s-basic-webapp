@@ -1,6 +1,6 @@
 id: task-6
 title: "Polish Codebase and CI/CD"
-status: "To Do"
+status: "Done"
 depends_on: ["task-5"]
 created: 2025-08-01
 updated: 2025-08-01
