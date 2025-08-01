@@ -170,29 +170,32 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: smoke
         run: |
-          echo "Waiting for load balancer to be ready..."
+          NS=calculator
+          LABEL="app=calculator"
+          echo "Waiting for Ingress to be ready..."
           for i in {1..30}; do
-            HOSTNAME=$(kubectl get svc -l app=calculator -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            HOSTNAME=$(kubectl get ingress -n $NS -l $LABEL -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
             if [[ -n "$HOSTNAME" ]]; then break; fi
             sleep 10
           done
           if [[ -z "$HOSTNAME" ]]; then
-            echo "Service hostname not found"; exit 1
+            echo "Ingress hostname not found after timeout"; kubectl get ingress -n $NS -l $LABEL; exit 1
           fi
-          URL="http://$HOSTNAME/health"
+          URL="http://$HOSTNAME/healthz"
           echo "Testing $URL"
-          for i in {1..12}; do
+          for i in {1..18}; do
             if curl -fsS "$URL"; then exit 0; fi
-            sleep 5
+            sleep 10
           done
-          echo "Health check failed"; exit 1
+          echo "Health check failed"
+          exit 1
       - name: Append smoke test to summary
         if: always()
         run: |
           {
             echo '### Smoke Test';
             if [[ "${{ steps.smoke.outcome }}" == "success" ]]; then
-              echo "✅ Deployment healthy at $URL";
+              echo "✅ Deployment healthy";
             else
               echo "❌ Deployment failed";
             fi
