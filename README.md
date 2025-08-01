@@ -103,6 +103,10 @@ The CI/CD process is automated using GitHub Actions and is split into two main w
     - **Trigger:** Runs on pull requests or pushes to `main` that modify the application code (`frontend/`, `backend/`) or the `Dockerfile`.
     - **Action:** Builds the Docker image. On a push to `main`, it pushes the image to GHCR, tagging it with `latest` and the commit SHA.
 
+- **Why two events?** The dual-trigger strategy keeps the pipeline efficient:  
+   • **pull_request** builds validate every change _before_ merge (fast feedback, no registry push).  
+   • **push** on `main` publishes the _final_ image, ensuring the registry only stores artefacts that passed review.
+
 2.  **Deploy (`deploy.yml`):**
     - **Trigger:** Runs on pull requests or pushes to `main` that modify the infrastructure (`terraform/`) or Kubernetes (`k8s/`) code.
     - **Plan (on PR):**
@@ -111,6 +115,41 @@ The CI/CD process is automated using GitHub Actions and is split into two main w
     - **Apply (on push to `main`):**
       - Applies the Terraform plan.
       - Uses `kustomize` to update the image tag in the Kubernetes deployment to the specific commit SHA and applies the manifests, triggering a zero-downtime rolling update.
+
+### Manual Branch
+
+The **`manual`** branch is reserved for _ad-hoc or experimental changes_ that you want to verify or deploy without merging to **`main`**.
+
+#### Typical flow
+
+1.  Create or check out the `manual` branch and push your commits.
+2.  **Optional – CI validation:**  
+    Open a pull-request targeting `main`.  
+    This will run the **Build** job (unit tests, Docker build), but it **will not** push the image or change infrastructure.
+3.  **Deploy from `manual`:**  
+    You have two options:
+
+    - **Local path**
+
+      ```bash
+      # Infra
+      terraform -chdir=terraform init
+      terraform -chdir=terraform apply -var-file=../terraform.tfvars
+
+      # Workload (update tag & roll out)
+      kustomize edit set image ghcr.io/<owner>/<repo>/calculator:<COMMIT_SHA>
+      kubectl apply -k k8s/
+      ```
+
+    - **GitHub Actions – manual trigger**  
+      Navigate to _Actions ▸ deploy.yml ▸ Run workflow_, pick the `manual` branch, and start the job.  
+      The workflow will run `terraform plan/apply` and `kubectl apply` exactly as it does on `main`.
+
+> ℹ️ The **Build** workflow pushes container images **only** on a direct push to `main`.  
+> For the `manual` branch you must either build & push the image yourself  
+> (`docker buildx build --push …`) **or** reuse the latest image already published from `main`.
+
+---
 
 ---
 
