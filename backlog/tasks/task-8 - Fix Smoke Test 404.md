@@ -1,4 +1,4 @@
-d: task-8
+id: task-8
 title: "Fix Smoke Test 404"
 status: "To Do"
 created: 2025-08-01
